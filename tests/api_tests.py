@@ -44,7 +44,7 @@ class TestAPI(unittest.TestCase):
    
     def test_get_posts(self):
         """ Getting posts from a populated database """
-        postA = models.Post(title="Example Post A", body="Just a test")
+        postA = models.Post(title="Example Post A", body="Just a test") # Could this have been achieved by first using post to put in the data
         postB = models.Post(title="Example Post B", body="Still a test")
         
         session.add_all([postA, postB])
@@ -213,9 +213,70 @@ class TestAPI(unittest.TestCase):
         
         data = json.loads(response.data.decode("ascii"))
         self.assertEqual(data["message"], "Request must contain application/json data")
+    
+    def test_invalid_data(self):
+        """ Posting a post with an invalid body """
+        data = {
+            "title": "Example Post",
+            "body": 32
+            }
+            
+        response = self.client.post("/api/posts", data=json.dumps(data), content_type="application/json", headers=[("Accept", "application/json")])
+        
+        #Check that response throws an unprocessable entity http status code
+        self.assertEqual(response.status_code,422)
+        
+        data = json.loads(response.data.decode("ascii"))
+        self.assertEqual(data["message"], "32 is not of type 'string'")
+        
+    def test_missing_data(self):
+        """ Posting a post with a missing body """
+        data = {
+            "title": "Example Post",
+        }
+        
+        response = self.client.post("/api/posts", data=json.dumps(data), content_type="application/json",headers=[("Accept", "application/json")])
+        
+        #Check that response throws an unprocessable entity http status code
+        self.assertEqual(response.status_code, 422)
+        
+        data = json.loads(response.data.decode("ascii"))
+        self.assertEqual(data["message"], "'body' is a required property")
+        
+    def test_post_put(self):
+        """Putting a new post"""
+        postA = models.Post(title="Example Post A", body="Just a test") 
+        postB = models.Post(title="Example Post B", body="Still a test")
+        
+        session.add_all([postA, postB])
+        session.commit()
+        
+        data = {
+            "title": "New Post", 
+            "body" : "Trying something out"
+        }
+        
+        response = self.client.put("/api/posts/{}".format(postB.id), data=json.dumps(data),
+        content_type="application/json",headers=[("Accept", "application/json")]
+        )
         
         
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.mimetype, "application/json")
+        self.assertEqual(urlparse(response.headers.get("Location")).path,
+                      "/api/posts/{}".format(postB.id))
         
+        data=json.loads(response.data.decode("ascii"))
+        self.assertEqual(data["id"],postB.id)
+        self.assertEqual(data["title"], "New Post")
+        self.assertEqual(data["body"], "Trying something out")
+        
+        posts= session.query(models.Post).all()
+        self.assertEqual(len(posts), 2)
+        
+        post = posts[1]
+        self.assertEqual(post.title, "New Post")
+        self.assertEqual(post.body, "Trying something out")
         
 
     def tearDown(self):
