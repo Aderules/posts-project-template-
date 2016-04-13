@@ -92,7 +92,7 @@ class TestAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.mimetype, "application/json")
         
-        data = json.loads(response.data.decode("ascii")) # why use data here and not post?
+        data = json.loads(response.data.decode("ascii")) 
         self.assertEqual(data["message"], "Could not find post with id 1")
        
     
@@ -106,11 +106,17 @@ class TestAPI(unittest.TestCase):
         session.commit()
         
         response = self.client.delete("/api/posts/{}".format(postB.id), headers=[("Accept", "application/json")])
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 204)
         self.assertEqual(response.mimetype, "application/json")
+       
         
-        post = json.loads(response.data.decode("ascii"))
-        #self.assertEqual(post["message"], "Post {} deleted".format(postB.id)) #gives key error
+         
+        data = json.loads(response.data)
+        print (data)
+        self.assertEqual(data["message"], "Post {} deleted".format(postB.id)) 
+        
+        #self.assertEqual(postB.id, 0)
+        #self.assertEqual(len(data), 1)#
        
     
     def test_delete_non_existent_post(self):
@@ -171,6 +177,45 @@ class TestAPI(unittest.TestCase):
         post=posts[1]
         self.assertEqual(post["title"], "Post with bells and whistles")
         self.assertEqual(post["body"], "Another test with bells")
+        
+        
+    def test_post_post(self):
+        """Posting a new post"""
+        data = {
+            "title": "Example Post", 
+            "body": "Just a test"}
+        
+        
+        response = self.client.post("/api/posts", data=json.dumps(data),content_type="application/json",headers=[("Accept", "application/json")])
+        
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.mimetype, "application/json")
+        self.assertEqual(urlparse(response.headers.get("Location")).path, "/api/posts/1")
+        
+        data=json.loads(response.data.decode("ascii"))
+        self.assertEqual(data["id"], 1)
+        self.assertEqual(data["title"], "Example Post")
+        self.assertEqual(data["body"], "Just a test")
+        
+        posts= session.query(models.Post).all()
+        self.assertEqual(len(posts), 1)
+        
+        post = posts[0]
+        self.assertEqual(post.title, "Example Post")
+        self.assertEqual(post.body, "Just a test")
+    
+    def test_unsupported_mimetype(self):
+        data = "<xml></xml>"
+        response = self.client.post("/api/posts", data=json.dumps(data),content_type="application/xml",headers=[("Accept", "application/json")])
+        
+        self.assertEqual(response.status_code, 415)
+        self.assertEqual(response.mimetype, "application/json")
+        
+        data = json.loads(response.data.decode("ascii"))
+        self.assertEqual(data["message"], "Request must contain application/json data")
+        
+        
+        
         
 
     def tearDown(self):
