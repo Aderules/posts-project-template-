@@ -107,16 +107,23 @@ class TestAPI(unittest.TestCase):
         
         response = self.client.delete("/api/posts/{}".format(postB.id), headers=[("Accept", "application/json")])
         self.assertEqual(response.status_code, 204)
-        self.assertEqual(response.mimetype, "application/json")
-       
+        response = self.client.get("/api/posts/{}".format(postB.id), headers=[("Accept", "application/json")])
+        self.assertEqual(response.status_code, 404)
         
-         
-        data = json.loads(response.data)
-        print (data)
-        self.assertEqual(data["message"], "Post {} deleted".format(postB.id)) 
+       
+       
+        #decoded_data = json.loads(post)
+        #self.assertEqual(len(posts), 1) 
+       # data = json.loads(response.data)
+       # print (data)
+       #self.assertEqual(data["message"], "Post {} deleted".format(postB.id)) 
         
         #self.assertEqual(postB.id, 0)
         #self.assertEqual(len(data), 1)#
+      
+    
+      
+       
        
     
     def test_delete_non_existent_post(self):

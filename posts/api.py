@@ -82,12 +82,8 @@ def delete_post_get(id):
     #else delete post
     session.delete(post)
     session.commit()
-   
-    #Provide feedback
-    #Return the post as JSON
-    message = "Post {} deleted".format(id)
-    data = json.dumps({"message": message})
-    return Response(data, 204, mimetype="application/json")
+    
+    return Response('', 204)
     
     
 @app.route("/api/posts", methods=["POST"])
