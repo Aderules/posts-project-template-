@@ -44,7 +44,7 @@ class TestAPI(unittest.TestCase):
    
     def test_get_posts(self):
         """ Getting posts from a populated database """
-        postA = models.Post(title="Example Post A", body="Just a test") # Could this have been achieved by first using post to put in the data
+        postA = models.Post(title="Example Post A", body="Just a test") 
         postB = models.Post(title="Example Post B", body="Still a test")
         
         session.add_all([postA, postB])
@@ -110,16 +110,6 @@ class TestAPI(unittest.TestCase):
         response = self.client.get("/api/posts/{}".format(postB.id), headers=[("Accept", "application/json")])
         self.assertEqual(response.status_code, 404)
         
-       
-       
-        #decoded_data = json.loads(post)
-        #self.assertEqual(len(posts), 1) 
-       # data = json.loads(response.data)
-       # print (data)
-       #self.assertEqual(data["message"], "Post {} deleted".format(postB.id)) 
-        
-        #self.assertEqual(postB.id, 0)
-        #self.assertEqual(len(data), 1)#
       
     
       
